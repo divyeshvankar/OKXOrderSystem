@@ -6,7 +6,7 @@
 
 ## Demo Video
 - Click below to see video.
-[![Watch the video](https://img.youtube.com/vi/rnFnTfrCScY/0.jpg)](https://www.youtube.com/watch?v=rnFnTfrCScY)
+- [![Watch the video](https://img.youtube.com/vi/rnFnTfrCScY/0.jpg)](https://www.youtube.com/watch?v=rnFnTfrCScY)
 
 
 ## Features
