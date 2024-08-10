@@ -136,6 +136,9 @@
   <ItemGroup>
     <ClInclude Include="okx_client.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".env" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

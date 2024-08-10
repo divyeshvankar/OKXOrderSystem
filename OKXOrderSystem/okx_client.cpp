@@ -13,6 +13,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
+
 
 // Base64 Encoding Function
 std::string base64Encode(const unsigned char* data, size_t length) {
@@ -128,21 +130,246 @@ void OKXClient::placeOrder(const std::string& symbol, const std::string& side, c
     std::cout << "Place Order Response: " << response << std::endl;
 }
 
-
-void OKXClient::cancelOrder(const std::string& orderId) {
+/*
+void OKXClient::cancelOrder(const std::string& orderId, const std::string& symbol) {
     std::string endpoint = "/api/v5/trade/cancel-order";
-    std::string body = R"({"ordId":")" + orderId + R"("})";
+
+    // Constructing the JSON body for the request
+    std::string body = R"({"ordId":")" + orderId + R"(","instId":")" + symbol + R"("})";
+
+    // Sending the POST request
     std::string response = sendRequest(endpoint, "POST", body);
+
+    // Printing the response
     std::cout << "Cancel Order Response: " << response << std::endl;
+}*/
+
+/*void OKXClient::cancelOrder(const std::string& orderId, const std::string& symbol) {
+    std::string endpoint = "/api/v5/trade/cancel-order";
+    std::string body = R"({"ordId":")" + orderId + R"(","instId":")" + symbol + R"("})";
+
+    try {
+        std::string response = sendRequest(endpoint, "POST", body);
+        std::cout << "Response: " << response << std::endl;
+        // Optionally, parse the response to check if the cancellation was successful
+        auto jsonResponse = nlohmann::json::parse(response);  // Assuming you have a JSON parsing utility
+        if (jsonResponse["code"] == "0") {
+            std::cout << "Order canceled successfully: " << jsonResponse["data"] << std::endl;
+        }
+        else {
+            std::cerr << "Failed to cancel order: " << jsonResponse["msg"] << std::endl;
+        }
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error canceling order: " << e.what() << std::endl;
+    }
+}
+*/
+
+
+void OKXClient::cancelOrder(const std::string& instId, const std::string& ordId , const std::string& clOrdId) {
+    std::string endpoint = "/api/v5/trade/cancel-order";
+
+    // Constructing the JSON body for the request
+    std::string body = R"({"instId":")" + instId + R"(")";
+
+    // Add either ordId or clOrdId to the body if provided
+    if (!ordId.empty()) {
+        body += R"(,"ordId":")" + ordId + R"(")";
+    }
+    else if (!clOrdId.empty()) {
+        body += R"(,"clOrdId":")" + clOrdId + R"(")";
+    }
+
+    body += "}";
+
+    // Sending the POST request
+    std::string response = sendRequest(endpoint, "POST", body);
+    std::cout << "Response " << response << std::endl;
+
+    try {
+        // Parse the response using nlohmann::json (assuming you have JSON parsing set up)
+        auto jsonResponse = nlohmann::json::parse(response);
+
+        // Check if the request was successful
+        if (jsonResponse["code"] == "0") {
+            std::cout << "Order canceled successfully: " << jsonResponse["data"] << std::endl;
+        }
+        else {
+            std::cerr << "Failed to cancel order: " << jsonResponse["msg"] << std::endl;
+        }
+    }
+    catch (const nlohmann::json::exception& e) {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error canceling order: " << e.what() << std::endl;
+    }
 }
 
-void OKXClient::modifyOrder(const std::string& orderId, double newSize, double newPrice) {
+void OKXClient::getOpenOrders(const std::string& instId, const std::string& instType) {
+    std::string endpoint = "/api/v5/trade/orders-pending";
+
+    // Constructing the query parameters
+    std::string params = "";
+    if (!instId.empty()) {
+        params += "?instId=" + instId;
+    }
+    if (!instType.empty()) {
+        if (!params.empty()) {
+            params += "&";
+        }
+        else {
+            params += "?";
+        }
+        params += "instType=" + instType;
+    }
+
+    // Sending the GET request
+    std::string response = sendRequest(endpoint + params, "GET");
+
+    try {
+        // Parse the response using nlohmann::json
+        auto jsonResponse = nlohmann::json::parse(response);
+
+        // Check if the request was successful
+        if (jsonResponse["code"] == "0") {
+            auto openOrders = jsonResponse["data"];
+            std::cout << "Open Orders:" << std::endl;
+
+            // Iterate through open orders and display the relevant information
+            for (const auto& order : openOrders) {
+                std::cout << "Order ID: " << order["ordId"] << ", "
+                    << "Instrument: " << order["instId"] << ", "
+                    << "Type: " << order["ordType"] << ", "
+                    << "State: " << order["state"] << ", "
+                    << "Size: " << order["sz"] << ", "
+                    << "Price: " << order["px"] << std::endl;
+            }
+        }
+        else {
+            std::cerr << "Failed to retrieve open orders: " << jsonResponse["msg"] << std::endl;
+        }
+    }
+    catch (const nlohmann::json::exception& e) {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error retrieving open orders: " << e.what() << std::endl;
+    }
+}
+
+
+void OKXClient::getOrderHistory(const std::string& symbol, const std::string& instType) {
+    std::string endpoint = "/api/v5/trade/orders-history";
+
+    // Constructing the query parameters
+    std::string params = "?instId=" + symbol +  "&instType=" + instType;
+
+    // Sending the GET request
+    std::string response = sendRequest(endpoint + params, "GET");
+
+    try {
+        // Parse the response using nlohmann::json
+        auto jsonResponse = nlohmann::json::parse(response);
+
+        // Check if the request was successful
+        if (jsonResponse["code"] == "0") {
+            auto orders = jsonResponse["data"];
+            for (const auto& order : orders) {
+                std::string ordId = order["ordId"];
+                std::string state = order["state"];
+                std::string ordType = order["ordType"];
+                std::string instId = order["instId"];
+                std::string fillSz = order["fillSz"];
+                std::string fillPx = order["fillPx"];
+
+                // Display the relevant details in a clean manner
+                std::cout << "Order ID: " << ordId
+                    << ", Instrument: " << instId
+                    << ", Type: " << ordType
+                    << ", State: " << state
+                    << ", Filled Size: " << fillSz
+                    << ", Fill Price: " << fillPx
+                    << std::endl;
+            }
+        }
+        else {
+            std::cerr << "Failed to get order history: " << jsonResponse["msg"] << std::endl;
+        }
+    }
+    catch (const nlohmann::json::exception& e) {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error retrieving order history: " << e.what() << std::endl;
+    }
+}
+
+void OKXClient::getPendingOrders(const std::string& ordType, const std::string& instType) {
+    // Construct the endpoint with query parameters
+    std::string endpoint = "/api/v5/trade/orders-pending?ordType=" + ordType + "&instType=" + instType;
+
+    // Sending the GET request
+    std::string response = sendRequest(endpoint, "GET");
+
+    // Printing the response
+    std::cout << "Pending Orders Response: " << response << std::endl;
+}
+
+
+/*void OKXClient::modifyOrder(const std::string& orderId, double newSize, double newPrice) {
     std::string endpoint = "/api/v5/trade/amend-order";
     std::string body = R"({"ordId":")" + orderId + R"(","newSz":")" + std::to_string(newSize) + R"(","newPx":")" + std::to_string(newPrice) + R"("})";
     std::string response = sendRequest(endpoint, "POST", body);
     std::cout << "Modify Order Response: " << response << std::endl;
 }
+*/
 
+void OKXClient::modifyOrder(const std::string& ordId, const std::string& instId, const std::string& newSz, const std::string& newPx) {
+    std::string endpoint = "/api/v5/trade/amend-order";
+
+    // Constructing the JSON body for the request
+    nlohmann::json bodyJson = {
+        {"ordId", ordId},
+        {"instId", instId}
+    };
+
+    // Add optional parameters if provided
+    if (!newSz.empty()) {
+        bodyJson["newSz"] = newSz;
+    }
+    if (!newPx.empty()) {
+        bodyJson["newPx"] = newPx;
+    }
+
+    // Convert JSON object to string
+    std::string body = bodyJson.dump();
+
+    // Sending the POST request
+    std::string response = sendRequest(endpoint, "POST", body);
+    std::cout << "Response." <<response<< std::endl;
+
+    try {
+        // Parse the response using nlohmann::json
+        auto jsonResponse = nlohmann::json::parse(response);
+
+        // Check if the request was successful
+        if (jsonResponse["code"] == "0") {
+            std::cout << "Order modified successfully." << std::endl;
+            std::cout << "Response: " << jsonResponse.dump(4) << std::endl;
+        }
+        else {
+            std::cerr << "Failed to modify order: " << jsonResponse["msg"] << std::endl;
+        }
+    }
+    catch (const nlohmann::json::exception& e) {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error modifying order: " << e.what() << std::endl;
+    }
+}
 std::string OKXClient::getOrderBook(const std::string& symbol) {
     std::string endpoint = "/api/v5/market/books?instId=" + symbol;
     std::string response = sendRequest(endpoint, "GET");

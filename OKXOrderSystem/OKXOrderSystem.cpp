@@ -1,43 +1,74 @@
 #include "okx_client.h"
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <cstdlib>
 
-int main() {
-    const std::string apiKey = "6cd8938d-3e4d-4447-b864-2bb62a6ac4c8";
-    const std::string secretKey = "813491CFDB3C732CC82F6A1BC28C71B4";
-    const std::string passphrase = "Divyesh@2019";
-    //const std::string apiKey = "f7db8d7a-b05e-458a-8cc7-b10252f60f30";
-    //const std::string secretKey = "315579F51BC76893B614B795675E56374";
-    //const std::string passphrase = "GoQuant1$";
-    OKXClient client(apiKey, secretKey, passphrase);
-    //const std::string s=client.getInstrumentDetails("MAGIC-USDT-SWAP");
-    //std::cout << s << std::endl;
-    // Example usage
-    client.placeOrder("MAGIC-USDT-SWAP", "buy", "limit", 1, 0.3);
-    //client.cancelOrder("12345");
-    client.modifyOrder("12345", 2.0, 1.1);
-    std::cout << client.getOrderBook("MAGIC-USDT-SWAP") << std::endl;
-    std::cout << client.getCurrentPositions() << std::endl;
+void loadEnvFile(const std::string& filename) {
+    std::ifstream envFile(filename);
+    if (!envFile.is_open()) {
+        std::cerr << "Error: Could not open .env file." << std::endl;
+        return;
+    }
 
-    return 0;
+    std::string line;
+    while (std::getline(envFile, line)) {
+        size_t pos = line.find('=');
+        if (pos != std::string::npos) {
+            std::string key = line.substr(0, pos);
+            std::string value = line.substr(pos + 1);
+
+            // Set the environment variable on Windows
+            _putenv_s(key.c_str(), value.c_str());
+        }
+    }
+
+    envFile.close();
 }
 
 
-// apikey = "c42bcd4a-bdc1-4b76-8b08-27557732fc7a"
-// secretkey = "D9F6D79BE0851EAFC73AD28AE6B02827"
-// IP = ""
-// API name = "Test API Demo"
-// Permissions = "Read/Withdraw/Trade"
 
+int main() {
+   
+    loadEnvFile(".env");
 
-//apikey = "6cd8938d-3e4d-4447-b864-2bb62a6ac4c8"
-//secretkey = "813491CFDB3C732CC82F6A1BC28C71B4"
-//IP = ""
-//API name = "otherdemo"
-//Permissions = "Read/Withdraw/Trade"
+    char* apiKey = nullptr;
+    char* secretKey = nullptr;
+    char* passphrase = nullptr;
 
+    // Use _dupenv_s to safely retrieve environment variables
+    _dupenv_s(&apiKey, nullptr, "OKX_API_KEY");
+    _dupenv_s(&secretKey, nullptr, "OKX_SECRET_KEY");
+    _dupenv_s(&passphrase, nullptr, "OKX_PASSPHRASE");
 
-//apikey = "00ecca74-58c4-40e3-91c2-1e4ffd2045c4"
-//secretkey = "D94A73560432B9309E5FF60C19D8A430"
-//IP = ""
-//API name = "test1"
-//Permissions = "Read/Withdraw/Trade"
+    if (!apiKey || !secretKey || !passphrase) {
+        std::cerr << "Error: API key, secret key, or passphrase environment variable is not set." << std::endl;
+        // Free memory before exiting
+        free(apiKey);
+        free(secretKey);
+        free(passphrase);
+        return 1;
+    }
+
+    OKXClient client(apiKey, secretKey, passphrase);
+
+    // Free memory after usage
+    free(apiKey);
+    free(secretKey);
+    free(passphrase);
+   
+    // Example usage
+    //client.placeOrder("MAGIC-USDT-SWAP", "buy", "limit", 1, 0.3); // works for open order
+    //client.placeOrder("MAGIC-USDT-SWAP", "buy", "limit", 1, 0.345); // works for filled order
+    //client.getPendingOrders( "limit", "SWAP"); //works
+    //client.getOrderHistory("MAGIC-USDT-SWAP","SWAP");
+   //client.cancelOrder( "MAGIC-USDT-SWAP", "1702742015357800448"); //works
+   client.getOpenOrders("MAGIC-USDT-SWAP", "SWAP"); //works
+   //client.modifyOrder("1703908579612348416", "MAGIC-USDT-SWAP", "2", "0.352"); //works
+    //client.getOpenOrders("MAGIC-USDT-SWAP", "SWAP"); //works
+
+    //std::cout << client.getOrderBook("MAGIC-USDT-SWAP") << std::endl;
+    //std::cout << client.getCurrentPositions() << std::endl;
+
+    return 0;
+}
