@@ -58,17 +58,17 @@ int main() {
     free(passphrase);
    
     // Example usage
-    //client.placeOrder("MAGIC-USDT-SWAP", "buy", "limit", 1, 0.3); // works for open order
+   // client.placeOrder("MAGIC-USDT-SWAP", "buy", "limit", 1, 0.3); // works for open order
     //client.placeOrder("MAGIC-USDT-SWAP", "buy", "limit", 1, 0.345); // works for filled order
     //client.getPendingOrders( "limit", "SWAP"); //works
-    //client.getOrderHistory("MAGIC-USDT-SWAP","SWAP");
-   //client.cancelOrder( "MAGIC-USDT-SWAP", "1702742015357800448"); //works
-   client.getOpenOrders("MAGIC-USDT-SWAP", "SWAP"); //works
-   //client.modifyOrder("1703908579612348416", "MAGIC-USDT-SWAP", "2", "0.352"); //works
-    //client.getOpenOrders("MAGIC-USDT-SWAP", "SWAP"); //works
+   // client.getOrderHistory("MAGIC-USDT-SWAP","SWAP");
+   //client.cancelOrder( "MAGIC-USDT-SWAP", "1704069961901199360"); //works
+   //client.getOpenOrders("MAGIC-USDT-SWAP", "SWAP"); //works
+   //client.modifyOrder("1704076679599149056", "MAGIC-USDT-SWAP", "2", "0.352"); //works
+   //client.getOpenOrders("MAGIC-USDT-SWAP", "SWAP"); //works
 
-    //std::cout << client.getOrderBook("MAGIC-USDT-SWAP") << std::endl;
-    //std::cout << client.getCurrentPositions() << std::endl;
+    std::cout << client.getOrderBook("MAGIC-USDT-SWAP") << std::endl;
+    std::cout << client.getCurrentPositions() << std::endl;
 
     return 0;
 }
