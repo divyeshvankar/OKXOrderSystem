@@ -5,7 +5,7 @@
 **OKXOrderSystem** is a C++ application that interacts with the OKX cryptocurrency trading platform. The application allows users to perform various trading operations, including placing orders, modifying orders, canceling orders, and retrieving order history.
 
 ## Demo Video
-[Watch the video](https://youtu.be/rnFnTfrCScY)
+[![Watch the video](https://img.youtube.com/vi/rnFnTfrCScY/0.jpg)](https://www.youtube.com/watch?v=rnFnTfrCScY)
 
 
 ## Features
